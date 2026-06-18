@@ -3,9 +3,10 @@ import pandas as pd
 import random
 import datetime
 import time
+import hashlib
 
 # ==============================================================================
-# 1. SYSTEM INITIALIZATION
+# 1. SYSTEM INITIALIZATION & SECURE GATEKEEPER
 # ==============================================================================
 st.set_page_config(
     page_title="Aexis Cyber Intrusion Tracker",
@@ -13,7 +14,37 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Initialize persistent memory for simulation logs
+# Simulated SHA-256 Hash of your Master Access Key for elite security
+# (This prevents your raw master password string from being readable in plain text)
+TARGET_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918" # Hash of "admin"
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🛡️ AEXIS SENTINEL: PERIMETER GATEWAY LOGIN")
+    st.caption("Secure Infrastructure Authorization Terminal")
+    st.write("---")
+    
+    with st.form(key="secure_gateway_form"):
+        user_id = st.text_input("Enter Sentinel Operator Identity (UID):", placeholder="e.g., operator_01")
+        access_token = st.text_input("Enter Digital Authorization Token:", type="password")
+        submit_auth = st.form_submit_button("Initialize Secure Node Sync", use_container_width=True)
+        
+        if submit_auth:
+            # Hash the input token to verify against security constraints safely
+            input_hash = hashlib.sha256(access_token.encode()).hexdigest()
+            
+            if input_hash == TARGET_HASH and user_id.strip() != "":
+                st.session_state.authenticated = True
+                st.success("🔒 Cryptographic Handshake Verified. Opening local runtime context...")
+                time.sleep(1.0)
+                st.rerun()
+            else:
+                st.error("🚨 Access Denied. Integrity mismatch detected. Event reported to core memory.")
+    st.stop()
+
+# Initialize persistent memory for simulation logs after successful login
 if "intrusion_logs" not in st.session_state:
     st.session_state.intrusion_logs = [
         {"Timestamp": "19:15:22", "Source IP": "185.220.101.5", "Target Port": "SSH (22)", "Threat Level": "High", "Action": "BLOCKED"},
@@ -40,6 +71,10 @@ else:
     if st.sidebar.button("TRIGGER SYSTEM LOCKDOWN", use_container_width=True):
         st.session_state.lockdown_mode = True
         st.rerun()
+
+if st.sidebar.button("🔒 Terminate Link Sessions", use_container_width=True):
+    st.session_state.authenticated = False
+    st.rerun()
 
 st.sidebar.write("---")
 st.sidebar.markdown("### 📊 Live Firewall Integrity")
